@@ -4,7 +4,7 @@ let connection;
 
 export const createConnection = (user) => {
   connection = new signalR.HubConnectionBuilder()
-    .withUrl("http://localhost:5252/chatHub")
+    .withUrl(import.meta.env.VITE_SIGNALR_URL)
     .withAutomaticReconnect()
     .build();
 

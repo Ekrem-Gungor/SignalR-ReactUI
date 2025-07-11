@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.7",
@@ -19,7 +19,8 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vite": "^7.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
