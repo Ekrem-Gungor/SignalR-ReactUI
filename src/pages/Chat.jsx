@@ -4,16 +4,15 @@ import ChatRoom from "../components/ChatRoom";
 import { createConnection } from "@/lib/signalr";
 
 export default function ChatPage() {
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("chatUser");
-    if (!storedUser) {
+    const storedUserName = localStorage.getItem("currentUserName");
+    if (!storedUserName) {
       navigate("/");
     } else {
-      setUser(storedUser);
-      createConnection(storedUser);
+      setUser((prev) => [...prev, storedUserName]);
     }
   }, []);
 

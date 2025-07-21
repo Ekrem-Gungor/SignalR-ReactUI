@@ -4,10 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MessageBubble from "./MessageBubble";
+import SystemMessageBubble from "./SystemMessageBubble";
 
 export default function ChatRoom({ user }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [systemMessage, setSystemMessage] = useState([]);
   const connectionRef = useRef(null);
 
   useEffect(() => {
@@ -17,8 +19,12 @@ export default function ChatRoom({ user }) {
 
     connectionRef.current = conn;
 
-    conn.on("ReceiveMessage", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    conn.on("ReceiveMessage", (chatMessage) => {
+      setMessages((prev) => [...prev, chatMessage]);
+    });
+
+    conn.on("ReceiveSystemMessage", (systemMessage) => {
+      setSystemMessage((prev) => [...prev, systemMessage]);
     });
 
     return () => {
@@ -28,6 +34,7 @@ export default function ChatRoom({ user }) {
 
   const sendMessage = async () => {
     if (message.trim()) {
+      // SendMessage olayında kaldım.
       await connectionRef.current.invoke("SendMessage", user, message);
       setMessage("");
     }
@@ -37,9 +44,14 @@ export default function ChatRoom({ user }) {
     <Card className="w-full max-w-6xl mx-auto mt-10 shadow-lg rounded-2xl">
       <CardContent className="p-4 space-y-4">
         <div className="h-[600px] overflow-y-auto bg-muted p-4 rounded-xl space-y-2">
-          {messages.map((msg, index) => (
-            <MessageBubble key={index} message={msg} currentUser={user} />
-          ))}
+          {systemMessage
+            ? systemMessage.map((msg, index) => (
+                <SystemMessageBubble key={index} message={msg} />
+              ))
+            : messages.map((msg, index) => (
+                <MessageBubble key={index} message={msg} />
+              ))}
+          {}
         </div>
         <div className="flex space-x-2">
           <Input

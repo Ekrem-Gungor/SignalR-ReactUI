@@ -2,15 +2,17 @@ import * as signalR from "@microsoft/signalr";
 
 let connection;
 
-export const createConnection = (user) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+export const createConnection = (userName) => {
   connection = new signalR.HubConnectionBuilder()
-    .withUrl(import.meta.env.VITE_SIGNALR_URL)
+    .withUrl(`${API_URL}/chatHub`)
     .withAutomaticReconnect()
     .build();
 
   connection.start().then(() => {
     console.log("SignalR API connected.");
-    connection.invoke("Join", user);
+    connection.invoke("Join", userName);
   });
 
   return connection;
