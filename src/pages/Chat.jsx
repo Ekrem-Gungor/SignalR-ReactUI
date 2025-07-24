@@ -1,20 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ChatRoom from "../components/ChatRoom";
-import { createConnection } from "@/lib/signalr";
+import { isTokenExpired } from "@/utils/jwt";
 
 export default function ChatPage() {
-  const [user, setUser] = useState([]);
+  const [user, setUser] = useState();
   const navigate = useNavigate();
 
   useEffect(() => {
     const storedUserName = localStorage.getItem("currentUserName");
-    if (!storedUserName) {
-      navigate("/");
+    const jwtToken = localStorage.getItem("AccessToken");
+    if (!jwtToken || isTokenExpired(jwtToken)) {
+      navigate("/", { replace: true });
     } else {
-      setUser((prev) => [...prev, storedUserName]);
+      setUser(storedUserName);
     }
   }, []);
 
-  return user ? <ChatRoom user={user} /> : null;
+  return user ? <ChatRoom /> : null;
 }

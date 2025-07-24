@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (userName.trim() || password.trim()) {
       const response = await loginApi(userName, password);
-      localStorage.setItem("currentUserName", response.userName);
+      localStorage.setItem("AccessToken", response.token);
       createConnection(response.userName);
       navigate("/chat");
     } else {

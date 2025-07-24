@@ -1,19 +1,40 @@
 import { useEffect, useState, useRef } from "react";
-import { getConnection } from "../lib/signalr";
+import { createConnection } from "../lib/signalr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MessageBubble from "./MessageBubble";
-import SystemMessageBubble from "./SystemMessageBubble";
+import UserSidebar from "./UserSidebar";
+import api from "@/lib/axios";
+import ChatRoomSidebar from "./ChatRoomSidebar";
 
-export default function ChatRoom({ user }) {
+export default function ChatRoom() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [systemMessage, setSystemMessage] = useState([]);
+
   const connectionRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const response = await api.get("/Chat/messages");
+      setMessages(response.data);
+    } catch (error) {
+      console.log("Mesajlar alınırken hata : ", error);
+    }
+  };
 
   useEffect(() => {
-    const conn = getConnection();
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem("currentUserName");
+    const conn = createConnection(storedUserName);
 
     if (!conn) return;
 
@@ -24,45 +45,62 @@ export default function ChatRoom({ user }) {
     });
 
     conn.on("ReceiveSystemMessage", (systemMessage) => {
-      setSystemMessage((prev) => [...prev, systemMessage]);
+      setMessages((prev) => [...prev, systemMessage]);
     });
+
+    if (connectionRef.current) {
+      fetchMessages();
+    }
 
     return () => {
       conn.off("ReceiveMessage");
+      conn.stop();
     };
   }, []);
 
   const sendMessage = async () => {
     if (message.trim()) {
-      // SendMessage olayında kaldım.
-      await connectionRef.current.invoke("SendMessage", user, message);
+      const storedUserName = localStorage.getItem("currentUserName");
+      await connectionRef.current.invoke(
+        "SendMessage",
+        storedUserName,
+        message
+      );
       setMessage("");
     }
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto mt-10 shadow-lg rounded-2xl">
-      <CardContent className="p-4 space-y-4">
-        <div className="h-[600px] overflow-y-auto bg-muted p-4 rounded-xl space-y-2">
-          {systemMessage
-            ? systemMessage.map((msg, index) => (
-                <SystemMessageBubble key={index} message={msg} />
-              ))
-            : messages.map((msg, index) => (
+    <div className="flex h-screen overflow-hidden">
+      {/* SOL TARAF ileride ChatRoomsSidebar için ayrıldı */}
+      {/* <div className="w-0 md:w-64 hidden md:block bg-gray-100 border-r" /> */}
+      <ChatRoomSidebar />
+
+      {/* ORTA KISIM */}
+      <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto p-4">
+        <Card className="w-full max-w-6xl shadow-lg rounded-2xl">
+          <CardContent className="p-4 space-y-4">
+            <div className="h-[670px] overflow-y-auto bg-muted p-4 rounded-xl space-y-2">
+              {messages.map((msg, index) => (
                 <MessageBubble key={index} message={msg} />
               ))}
-          {}
-        </div>
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Mesaj yaz..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <Button onClick={sendMessage}>Gönder</Button>
-        </div>
-      </CardContent>
-    </Card>
+              <div ref={messagesEndRef} />
+            </div>
+            <div className="flex space-x-2">
+              <Input
+                placeholder="Mesaj yaz..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <Button onClick={sendMessage}>Gönder</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* SAĞ TARAFTA SABİT KULLANICI LİSTESİ */}
+      <UserSidebar />
+    </div>
   );
 }

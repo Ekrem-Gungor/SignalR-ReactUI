@@ -7,7 +7,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("jwtToken");
+  const token = localStorage.getItem("AccessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -16,33 +16,17 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  async (err) => {
+  (err) => {
     const originalRequest = err.config;
 
-    // Token expired hatası
-    if (
-      err.response?.status === 401 &&
-      !originalRequest._retry &&
-      localStorage.getItem("refreshToken")
-    ) {
+    // Eğer 401 Unauthorized hatası varsa
+    if (err.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      try {
-        const resp = await axios.post(`${BASE_URL}/api/auth/refresh-token`, {
-          refresToken: localStorage.getItem("refreshToken"),
-        });
 
-        const newToken = resp.data.token;
-        localStorage.setItem("jwtToken", newToken);
-        api.defaults.headers.Authorization = `Bearer ${newToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem("jwtToken");
-        localStorage.removeItem("refreshToken");
-        window.location.href = "/auth/login";
-        return Promise.reject(refreshError);
-      }
+      localStorage.removeItem("AccessToken");
+      window.location.href = "/"; // Şuanda giriş sayfasına yönlendiriliyor. Error sayfaları yapıldığında burada 401 hata sayfasına yönlendirme işlemi yapılacak.
     }
+
     return Promise.reject(err);
   }
 );
